@@ -97,6 +97,13 @@ def report():
             db.reported.update_one({"text":text},{"$set":{"spoiler":spoilerAdd,"noSpoiler":noSpoilerAdd}})
         else:
             db.reported.insert({"text":text,"spoiler":spoilerAdd,"noSpoiler":noSpoilerAdd})
+        
+        isSpoiler=(spoilerAdd>=noSpoilerAdd)
+        textDB=db.texts.find_one({"text":text})
+        if(textDB):
+            db.texts.update_one({"text":text},{"$set":{"spoiler":isSpoiler}})
+        else:
+            db.texts.insert({"text":text,"spoiler":isSpoiler})
     except:
         print("db insert failed")
     
