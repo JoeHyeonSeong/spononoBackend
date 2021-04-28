@@ -76,6 +76,8 @@ def predict():
             output=result
     )
 
+
+
 @app.route('/report',methods=["POST"])
 def report():
     received_data=request.json
@@ -108,6 +110,62 @@ def report():
         print("db insert failed")
     
     return {}
+
+@app.route('/question',methods=['GET'])
+def question():
+    spoilerSampleNum=1
+    noSpoilerSampleNum=1
+    spoilerRealNum=1
+    noSpoilerRealNum=2
+    #get data for prove
+    spoilerSample=db.sample.aggregate([
+        {"$match":{"isSpoiler":True}},
+        {"$sample":{"size":spoilerSampleNum}}
+        ])
+
+    noSpoilerSample=db.sample.aggregate([
+        {"$match":{"isSpoiler":False}},
+        {"$sample":{"size":noSpoilerSampleNum}}
+        ])
+    sample=[]
+    for s in spoilerSample:
+        sample.append({"text":s["text"],"isSpoiler":s["isSpoiler"]})
+    for s in noSpoilerSample:
+        sample.append({"text":s["text"],"isSpoiler":s["isSpoiler"]})
+
+    question=[]
+    texts=db.texts.aggregate([
+        {"$lookup":{
+            "from":"reported",
+            "localField":"text",
+            "foreignField":"text",
+            "as":"reported"
+            }
+        }
+    ])
+    spoilerCnt=0
+    noSpoilerCnt=0
+    questions=[]
+    for t in texts:
+        if(t["reported"]==[]):
+            if(t["spoiler"]):
+                if(spoilerCnt<spoilerRealNum):
+                    spoilerCnt+=1
+                    questions.append({"text":t["text"]})
+            else:
+                if(noSpoilerCnt<noSpoilerRealNum):
+                    noSpoilerCnt+=1
+                    questions.append({"text":t["text"]})
+        if(spoilerCnt==spoilerRealNum and noSpoilerCnt==noSpoilerRealNum):
+            break
+    result={"samples":sample,"questions":questions}
+    print("QUESTION\n")
+    print(result)
+    return jsonify(
+        output=result
+    )
+
+
 
 @app.route('/search',methods=['GET'])
 def search():
