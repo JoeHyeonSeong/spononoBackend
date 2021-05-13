@@ -110,7 +110,7 @@ def report():
         print("db insert failed")
     
     return {}
-
+"""
 @app.route('/question',methods=['GET'])
 def question():
     spoilerSampleNum=1
@@ -164,7 +164,7 @@ def question():
     return jsonify(
         output=result
     )
-
+"""
 
 
 @app.route('/search',methods=['GET'])
