@@ -72,11 +72,38 @@ def predict():
     elapsed=(datetime.datetime.now()-start).total_seconds()
     db.predictLog.insert({"date":datetime.datetime.now(),"hit":hit,"responseTime":elapsed,"isSpoiler":result})
     print("\n\nPREDICT\n",text+"\n","result: "+str(result)+" hit: "+str(hit)+" response time: "+str(elapsed)+"\n")
-    return jsonify(
-            output=result
-    )
+    return jsonify(output=result)
 
-
+@app.route('/swearPredict',methods=["POST"])
+def swearPredict():
+    start=datetime.datetime.now()
+    received_data=request.json
+    text=received_data['contents']
+    #check if exist in DB
+    dbResult=db.swearTexts.find({"text":text})
+    result=False
+    hit=False
+    #cache hit
+    if(dbResult.count()>0):
+        result=dbResult[0]["swear"]
+        hit=True
+    else:#cache miss
+        hit=False
+        transform = nlp.data.BERTSentenceTransform(swTok, max_seq_length=max_len,pad= True, pair=False)
+        transText=transform([text])
+        token_id=torch.tensor([transText[0]])
+        valid_length=torch.tensor(np.array([transText[1]]))
+        seq_id=torch.tensor([transText[2]])
+        result=swModel(token_id.long(),valid_length,seq_id.long())
+        max_vals, max_indices = torch.max(result, 1)
+        result=max_indices[0].item()==1
+        try:
+            db.swearTexts.insert({"text":text,"swear":result})
+        except:
+            print("db insert failed")
+    elapsed=(datetime.datetime.now()-start).total_seconds()
+    print("\n\nSWEAR PREDICT\n",text+"\n","result: "+str(result)+" hit: "+str(hit)+" response time: "+str(elapsed)+"\n")
+    return jsonify(output=result)
 
 
 @app.route('/report',methods=["POST"])
