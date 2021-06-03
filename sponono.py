@@ -172,7 +172,7 @@ def connectDB():
 max_len=64
 batch_size = 64
 port=5000
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+#os.environ["TOKENIZERS_PARALLELISM"] = "false"
 db=connectDB()
 model,tok=make_model("classifier.pt","vocab.vocab")
 swModel,swTok=make_model("swearClassifier.pt","swearvocab.vocab")
